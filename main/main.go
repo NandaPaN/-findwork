@@ -21,7 +21,7 @@ func main() {
 	defer client.Close()
 
 	// Sets the name of the image file to annotate.
-	filename := "../testdata/cat.jpg"
+	filename := "../images/test1.jpg"
 
 	file, err := os.Open(filename)
 	if err != nil {
