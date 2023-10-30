@@ -7,9 +7,22 @@ import (
 	"os"
 
 	vision "cloud.google.com/go/vision/apiv1"
+	storage "cloud.google.com/go/storage"
 )
 
 func main() {
+	ctx := context.Background()
+	bucketName := "a3rbhy89s" //bucket名
+	objectPath := "a3rbhy89s/receipt_images" //画像のパス
+	destinationPath := "../Images"  // 保存先のローカルパス
+
+	err := downloadImage(ctx, bucketName, objectPath, destinationPath)
+	if err != nil {
+		fmt.Println("画像のダウンロードに失敗しました:", err)
+		return
+	}
+	fmt.Println ("画像をダウンロードしました:", destinationPath)
+
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: program-name <image-file-path>")
 		return
@@ -21,6 +34,42 @@ func main() {
 	}
 }
 
+//Cloud Storage 接続
+func downloadImage(ctx context.Context, bucketName, objectPath, destinationPath string) error  {
+	// Google Cloud Storage クライアントを初期化
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	//バケット指定
+	bucket := client.Bucket(bucketName)
+
+	//ファイル取得
+	obj := bucket.Object(objectPath)
+	r, err := obj.NewReader(ctx)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	//ファイルをローカルに保存
+	file, err := os.Create(destinationPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, r)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//Vision AIによるロゴ判定
 func detectLogos(w io.Writer, file string) error {
 	ctx := context.Background()
 
